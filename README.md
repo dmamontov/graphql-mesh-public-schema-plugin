@@ -1,6 +1,6 @@
 # Public Schema Plugin for GraphQL Mesh
 
-# Public Schema Plugin is a plugin for GraphQL Mesh that allows you to separate public and private schemas in your API. With this plugin, you can designate which parts of your schema should be accessible only within your service and which can be exposed to external service.
+Public Schema Plugin is a plugin for GraphQL Mesh that allows you to separate public and private schemas in your API. With this plugin, you can designate which parts of your schema should be accessible only within your service and which can be exposed to external service.
 
 ## Installation
 
