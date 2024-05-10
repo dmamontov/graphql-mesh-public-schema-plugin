@@ -1,7 +1,7 @@
+import { SyntaxError } from 'apollo-server-errors';
 import {
     getNamedType,
     GraphQLEnumType,
-    GraphQLError,
     GraphQLInputObjectType,
     GraphQLInterfaceType,
     GraphQLObjectType,
@@ -155,7 +155,7 @@ export default function usePublicSchema(
                                     // @ts-expect-error
                                     isPrivate(node.name.value, objectType.name)
                                 ) {
-                                    const error = new GraphQLError(
+                                    const error = new SyntaxError(
                                         // @ts-expect-error
                                         `Cannot field "${node.name.value}" on type "${objectType.name}".`,
                                     );
