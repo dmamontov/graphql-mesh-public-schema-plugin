@@ -43,7 +43,9 @@ export default function usePublicSchema(
     const isPrivate = (fieldName: string, typeName: string): boolean => {
         return !!privateFields.find(
             privateField =>
-                privateField.fieldName === fieldName && privateField.typeName === typeName,
+                privateField.fieldName === fieldName &&
+                privateField.typeName === typeName &&
+                !privateField.argumentName,
         );
     };
 
@@ -51,7 +53,12 @@ export default function usePublicSchema(
         onPluginInit({ addPlugin, setSchema }) {
             addPlugin({
                 onSchemaChange({ schema }) {
-                    const handlePrivate = (input: any, parentType?: string) => {
+                    const handlePrivate = (
+                        input: any,
+                        fieldName: string,
+                        parentType?: string,
+                        argumentName?: string,
+                    ) => {
                         if (
                             input.extensions?.isPrivate ||
                             input.astNode?.directives?.find(
@@ -60,7 +67,8 @@ export default function usePublicSchema(
                         ) {
                             privateFields.push({
                                 typeName: parentType || 'undefined',
-                                fieldName: input.name,
+                                fieldName,
+                                argumentName,
                             });
                         }
                     };
@@ -77,21 +85,21 @@ export default function usePublicSchema(
                             type instanceof GraphQLEnumType ||
                             type instanceof GraphQLUnionType
                         ) {
-                            handlePrivate(type);
+                            handlePrivate(type, type.name);
                         } else if (
                             type instanceof GraphQLInterfaceType ||
                             type instanceof GraphQLObjectType ||
                             type instanceof GraphQLInputObjectType
                         ) {
-                            handlePrivate(type);
+                            handlePrivate(type, type.name);
 
                             const fields = type.getFields();
                             for (const field of Object.values(fields)) {
-                                handlePrivate(field, type.name);
+                                handlePrivate(field, field.name, type.name);
 
                                 if (field.args) {
                                     for (const arg of field.args) {
-                                        handlePrivate(arg, field.name);
+                                        handlePrivate(arg, field.name, type.name, arg.name);
                                     }
                                 }
                             }
@@ -111,6 +119,7 @@ export default function usePublicSchema(
                         const privateFieldsByType = privateFields.filter(
                             privateField => privateField.typeName === rootType.name,
                         );
+
                         if (privateFieldsByType.length === 0) {
                             newResultTypes.push(rootType);
 
@@ -119,10 +128,25 @@ export default function usePublicSchema(
 
                         const fieldFilter = (field: any) =>
                             !privateFieldsByType.find(
-                                privateField => privateField.fieldName === field.name,
+                                privateField =>
+                                    privateField.fieldName === field.name &&
+                                    !privateField.argumentName,
                             );
 
                         if (rootType.fields) {
+                            for (const field of rootType.fields) {
+                                if (field.args) {
+                                    field.args = field.args.filter(
+                                        (arg: any) =>
+                                            !privateFieldsByType.find(
+                                                privateField =>
+                                                    privateField.argumentName === arg.name &&
+                                                    privateField.fieldName === field.name,
+                                            ),
+                                    );
+                                }
+                            }
+
                             rootType.fields = rootType.fields.filter(fieldFilter);
                         }
                         if (rootType.inputFields) {

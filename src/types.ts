@@ -5,4 +5,5 @@ export interface PublicSchemaPluginConfig {
 export interface SchemaField {
     typeName: string;
     fieldName: string;
+    argumentName?: string;
 }
